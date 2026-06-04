@@ -24,9 +24,7 @@ jobs:
         run: |
           cd simple_live_app
           flutter pub get
-          # 【解药 1】降级网络检测插件，绕过 iOS 18 流量控制 API 冲突
           flutter pub add connectivity_plus:6.1.1
-          # 【解药 2】降级设备信息插件，绕过 Vision Pro API 编译冲突
           flutter pub add device_info_plus:10.1.2
 
       - name: Build iOS App without codesign
@@ -34,13 +32,17 @@ jobs:
           cd simple_live_app
           flutter build ios --release --no-codesign
 
-      - name: Zip Runner.app
+      # 【核心改动】直接在云端 Mac 上创建 Payload 并打包成绝对纯正的 .ipa 文件
+      - name: Create Standard IPA File
         run: |
           cd simple_live_app/build/ios/iphoneos
-          zip -r Runner_Unsigned.zip Runner.app
+          mkdir Payload
+          mv Runner.app Payload/
+          zip -r simple_live_app.ipa Payload
 
-      - name: Upload iOS Artifact
+      # 上传最终的 .ipa 文件
+      - name: Upload iOS IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ios-runner-app
-          path: simple_live_app/build/ios/iphoneos/Runner_Unsigned.zip
+          name: ios-ipa-package
+          path: simple_live_app/build/ios/iphoneos/simple_live_app.ipa
