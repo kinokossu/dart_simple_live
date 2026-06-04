@@ -20,12 +20,14 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Install and Downgrade Connectivity Plugin
+      - name: Install and Downgrade Incompatible Plugins
         run: |
           cd simple_live_app
           flutter pub get
-          # 【解药】强行将产生编译错误的插件降级到稳定版，绕过 Xcode 兼容性死锁
+          # 【解药 1】降级网络检测插件，绕过 iOS 18 流量控制 API 冲突
           flutter pub add connectivity_plus:6.1.1
+          # 【解药 2】降级设备信息插件，绕过 Vision Pro API 编译冲突
+          flutter pub add device_info_plus:10.1.2
 
       - name: Build iOS App without codesign
         run: |
