@@ -1,0 +1,45 @@
+name: Build Unsigned iOS App
+
+on:
+  workflow_dispatch: # 允许你手动点击按钮触发打包
+
+jobs:
+  build-ios:
+    runs-on: macos-latest # 启动微软/GitHub 免费提供的云端 Mac 电脑
+
+    steps:
+      # 1. 拉取你 Fork 的直播项目代码
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. 安装并配置 Flutter 环境
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true # 开启缓存，下次打包会极快
+
+      # 3. 安装项目依赖（就是你之前在 Windows 跑过的 pub get）
+      - name: Install dependencies
+        run: |
+          cd simple_live_app
+          flutter pub get
+
+      # 4. 【核心】强行编译无需苹果证书的 iOS 壳程序
+      - name: Build iOS App without codesign
+        run: |
+          cd simple_live_app
+          flutter build ios --release --no-codesign
+
+      # 5. 把编译出来的 Runner.app 文件夹打包成 zip，方便你在 Windows 下载
+      - name: Zip Runner.app
+        run: |
+          cd simple_live_app/build/ios/iphoneos
+          zip -r Runner_Unsigned.zip Runner.app
+
+      # 6. 将打包好的 zip 上传到 GitHub 网页供你下载
+      - name: Upload iOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-runner-app
+          path: simple_live_app/build/ios/iphoneos/Runner_Unsigned.zip
